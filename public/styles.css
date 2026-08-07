@@ -1,0 +1,543 @@
+/* Boo's Game Box
+   ─────────────────────────────────────────────────────────────────────
+   Palette:  cream ground, teal primary, coral for wrong/retry,
+             mustard for rewards, ink for text.
+   Type:     Fraunces for titles and game names, Plus Jakarta Sans for
+             anything a child reads as an instruction.
+   Rule:     one accent per screen. No gradients. No blurred shadows.
+             Nothing animates unless it was touched.
+   ───────────────────────────────────────────────────────────────────── */
+
+:root {
+  --cream: #FDF6E3;
+  --teal: #2A9D8F;
+  --teal-dark: #218074;
+  --coral: #E76F51;
+  --mustard: #E9C46A;
+  --ink: #264653;
+  --ink-soft: #4d6b78;
+  --paper: #FFFCF4;
+
+  --border: 3px;
+  --drop: 4px;
+  --radius: 14px;
+  --tap: 64px;
+
+  --title: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --body: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system,
+          "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Segoe UI Mono",
+          "Roboto Mono", Menlo, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 18px;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
+}
+
+body {
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+           env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+.screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.screen[hidden] { display: none; }
+
+/* ── shared chunky-thing styling ─────────────────────────────────── */
+
+.btn {
+  font-family: var(--body);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--paper);
+  border: var(--border) solid var(--ink);
+  border-radius: var(--radius);
+  box-shadow: var(--drop) var(--drop) 0 var(--ink);
+  min-height: var(--tap);
+  padding: 0.7rem 1.25rem;
+  cursor: pointer;
+  text-align: center;
+  transition: transform 110ms ease, box-shadow 110ms ease, background-color 110ms ease;
+}
+
+.btn:hover { background: #fff; }
+
+.btn:active {
+  transform: translate(var(--drop), var(--drop));
+  box-shadow: 0 0 0 var(--ink);
+}
+
+.btn-primary {
+  background: var(--teal);
+  color: #fff;
+}
+.btn-primary:hover { background: var(--teal-dark); }
+
+.btn-reward {
+  background: var(--mustard);
+  color: var(--ink);
+}
+.btn-reward:hover { background: #f0d083; }
+
+.btn-quiet {
+  background: transparent;
+  box-shadow: none;
+  border-color: transparent;
+  font-weight: 600;
+  color: var(--ink-soft);
+  padding: 0.5rem 0.75rem;
+  min-height: 48px;
+  white-space: nowrap;
+}
+.btn-quiet:hover {
+  background: rgba(38, 70, 83, 0.07);
+  color: var(--ink);
+}
+.btn-quiet:active { transform: none; box-shadow: none; }
+
+.btn-icon {
+  min-width: 56px;
+  min-height: 56px;
+  padding: 0;
+  font-size: 1.4rem;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+.btn-icon:hover { background: rgba(38, 70, 83, 0.07); }
+.btn-icon:active { transform: none; box-shadow: none; }
+
+/* One focus style everywhere, and it is impossible to miss. */
+:focus-visible {
+  outline: 4px solid var(--coral);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+:focus:not(:focus-visible) { outline: none; }
+
+/* ── waking up ───────────────────────────────────────────────────── */
+
+.loading {
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.loading-card {
+  width: min(420px, 100%);
+  text-align: center;
+}
+
+.loading-emoji { font-size: 4rem; line-height: 1; }
+
+.loading-title {
+  font-family: var(--title);
+  font-optical-sizing: auto;
+  font-variation-settings: "opsz" 96;
+  font-weight: 800;
+  font-size: clamp(1.9rem, 8vw, 2.6rem);
+  margin: 0.5rem 0 1.25rem;
+  color: var(--ink);
+}
+
+.loading-status {
+  margin: 0 0 0.9rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  min-height: 1.5em;
+}
+
+.progress {
+  height: 22px;
+  border: var(--border) solid var(--ink);
+  border-radius: 999px;
+  background: var(--paper);
+  overflow: hidden;
+  box-shadow: var(--drop) var(--drop) 0 var(--ink);
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--teal);
+  transition: width 260ms ease;
+}
+
+.loading-help {
+  margin: 1.25rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+
+#retry { margin-top: 1.25rem; }
+
+/* ── the box ─────────────────────────────────────────────────────── */
+
+.picker {
+  overflow-y: auto;
+  padding: clamp(1rem, 4vw, 2.5rem) clamp(1rem, 4vw, 2rem) 2.5rem;
+  align-items: center;
+}
+
+/* The picker really is a box: a lid, a rim, and things sitting inside. */
+.box {
+  width: min(880px, 100%);
+  border: var(--border) solid var(--ink);
+  border-radius: calc(var(--radius) + 6px);
+  background: var(--paper);
+  box-shadow: 8px 8px 0 var(--ink);
+  overflow: hidden;
+}
+
+.box-lid {
+  background: var(--teal);
+  color: #fff;
+  border-bottom: var(--border) solid var(--ink);
+  padding: 1.4rem clamp(1rem, 4vw, 2rem) 1.2rem;
+}
+
+.box-title {
+  font-family: var(--title);
+  font-optical-sizing: auto;
+  font-variation-settings: "opsz" 144;
+  font-weight: 900;
+  font-size: clamp(1.8rem, 7vw, 2.7rem);
+  line-height: 1.05;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.box-subtitle {
+  margin: 0.35rem 0 0;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.tiles {
+  list-style: none;
+  margin: 0;
+  padding: clamp(1.25rem, 4vw, 2rem);
+  display: grid;
+  gap: clamp(1.1rem, 3.5vw, 1.75rem);
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+}
+
+/* A tile should feel like picking up a card, not clicking a menu item. */
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  width: 100%;
+  min-height: 168px;
+  padding: 1.1rem 1.15rem 1.25rem;
+  text-align: left;
+  background: var(--cream);
+  border: var(--border) solid var(--ink);
+  border-radius: var(--radius);
+  box-shadow: var(--drop) var(--drop) 0 var(--ink);
+  cursor: pointer;
+  font-family: var(--body);
+  color: var(--ink);
+  transform: rotate(-1.5deg);
+  transition: transform 130ms ease, box-shadow 130ms ease, background-color 130ms ease;
+}
+
+.tile:nth-child(even) { transform: rotate(1.5deg); }
+
+.tile:hover,
+.tile:focus-visible {
+  transform: rotate(0deg) translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--ink);
+  background: var(--paper);
+}
+
+.tile:active {
+  transform: rotate(0deg) translate(var(--drop), var(--drop));
+  box-shadow: 0 0 0 var(--ink);
+}
+
+.tile-emoji {
+  font-size: 2.6rem;
+  line-height: 1.1;
+}
+
+.tile-title {
+  font-family: var(--title);
+  font-optical-sizing: auto;
+  font-variation-settings: "opsz" 72;
+  font-weight: 800;
+  font-size: 1.4rem;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.tile-blurb {
+  margin: 0;
+  font-size: 0.96rem;
+  color: var(--ink-soft);
+  line-height: 1.35;
+}
+
+.tile-age {
+  margin-top: auto;
+  padding-top: 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.ios-hint {
+  width: min(880px, 100%);
+  margin: 1.5rem 0 0;
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  border: 2px dashed var(--ink-soft);
+  border-radius: var(--radius);
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+
+/* `display: flex` above would otherwise beat the `hidden` attribute. */
+.ios-hint[hidden] { display: none; }
+
+.ios-hint-dismiss {
+  font-family: var(--body);
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--ink);
+  background: transparent;
+  border: 2px solid var(--ink-soft);
+  border-radius: 999px;
+  padding: 0.45rem 1rem;
+  min-height: 44px;
+  cursor: pointer;
+}
+.ios-hint-dismiss:hover { background: rgba(38, 70, 83, 0.07); }
+
+/* ── a game ──────────────────────────────────────────────────────── */
+
+.game {
+  height: 100%;
+  overflow: hidden;
+}
+
+.game-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem clamp(0.75rem, 3vw, 1.5rem);
+  border-bottom: var(--border) solid var(--ink);
+  background: var(--paper);
+  flex-shrink: 0;
+}
+
+.game-title {
+  font-family: var(--title);
+  font-optical-sizing: auto;
+  font-variation-settings: "opsz" 72;
+  font-weight: 800;
+  font-size: clamp(1.1rem, 4.5vw, 1.5rem);
+  margin: 0 auto;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.game-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.score {
+  font-weight: 800;
+  font-size: 1rem;
+  background: var(--mustard);
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  padding: 0.3rem 0.85rem;
+  white-space: nowrap;
+}
+
+.transcript {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: clamp(1rem, 4vw, 1.75rem) clamp(1rem, 4vw, 1.75rem) 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.turn {
+  width: min(640px, 100%);
+  margin: 0 auto;
+}
+
+.line {
+  margin: 0 0 0.25rem;
+  font-size: 1.1rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.line.is-blank { height: 0.7rem; margin: 0; }
+
+.art {
+  font-family: var(--mono);
+  font-size: clamp(0.85rem, 3.4vw, 1.05rem);
+  line-height: 1.35;
+  margin: 0.6rem auto 0.3rem;
+  padding: 0.75rem 0.9rem;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  overflow-x: auto;
+  white-space: pre;
+  width: fit-content;
+  max-width: 100%;
+}
+
+/* Two monospace columns per emoji, exactly as a terminal counts them.
+   Do not set a font-size here: `ch` is measured in this element's own font,
+   so shrinking the text would shrink the column it is meant to fill. */
+.art-emoji {
+  display: inline-block;
+  width: 2ch;
+  text-align: center;
+}
+
+.turn-error .line { color: var(--coral); font-weight: 700; }
+
+/* The prompt sits under the transcript and never scrolls away. */
+.prompt {
+  flex-shrink: 0;
+  border-top: var(--border) solid var(--ink);
+  background: var(--paper);
+  padding: clamp(0.9rem, 3.5vw, 1.4rem);
+  padding-bottom: max(clamp(0.9rem, 3.5vw, 1.4rem), env(safe-area-inset-bottom));
+  max-height: 55%;
+  overflow-y: auto;
+}
+
+.prompt-inner {
+  width: min(640px, 100%);
+  margin: 0 auto;
+}
+
+.prompt-label {
+  margin: 0 0 0.85rem;
+  font-weight: 700;
+  font-size: 1.15rem;
+  line-height: 1.35;
+}
+
+.choices {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+/* Answers are short; give the words room rather than the padding. */
+.choices .btn {
+  padding-left: 0.7rem;
+  padding-right: 0.7rem;
+  text-wrap: balance;
+}
+
+/* Two or fewer answers get full-width buttons; a small hand can't miss. */
+.choices.is-few { grid-template-columns: 1fr; }
+
+.answer-row {
+  display: flex;
+  gap: 0.85rem;
+  align-items: stretch;
+}
+
+.answer-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: var(--tap);
+  font-family: var(--body);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--cream);
+  border: var(--border) solid var(--ink);
+  border-radius: var(--radius);
+  box-shadow: inset 2px 2px 0 rgba(38, 70, 83, 0.1);
+  padding: 0.6rem 1rem;
+}
+
+.answer-input::placeholder { color: var(--ink-soft); font-weight: 500; }
+
+.answer-row .btn { flex: 0 0 auto; min-width: 96px; }
+
+.end-row {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 520px) {
+  .end-row { grid-template-columns: 1fr 1fr; }
+}
+
+/* ── restraint ───────────────────────────────────────────────────── */
+
+/* Nothing moves under its own steam. The tiles keep their resting tilt —
+   that is a shape, not an animation — but they stop gliding into place. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+  .tile:hover,
+  .tile:focus-visible { transform: rotate(0deg); }
+}
+
+/* On a phone the game bar has three things to fit and not much room.
+   Everything shrinks except the tap targets. */
+@media (max-width: 480px) {
+  .game-bar { gap: 0.25rem; padding-left: 0.4rem; padding-right: 0.4rem; }
+  .game-bar .btn-quiet { font-size: 0.82rem; padding: 0.5rem 0.3rem; }
+  .game-title { font-size: 0.95rem; }
+  .game-title-emoji { display: none; }
+  .btn-icon { min-width: 48px; min-height: 48px; font-size: 1.2rem; }
+  .score { font-size: 0.9rem; padding: 0.25rem 0.6rem; }
+}
+
+@media (max-width: 400px) {
+  html, body { font-size: 17px; }
+  .tiles { grid-template-columns: 1fr; }
+}

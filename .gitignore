@@ -1,0 +1,7 @@
+# Everything in public/ is deployed verbatim. Nothing generated belongs there.
+__pycache__/
+*.py[cod]
+
+.DS_Store
+Thumbs.db
+

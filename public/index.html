@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Boo's Game Box</title>
+<meta name="description" content="A little box of games for small people.">
+
+<meta name="theme-color" content="#2A9D8F">
+<meta name="color-scheme" content="light">
+<link rel="manifest" href="manifest.json">
+
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Game Box">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/icon-192.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600..900&family=Plus+Jakarta+Sans:wght@400..800&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ─── waking up ─────────────────────────────────────────────────── -->
+<section id="loading" class="screen loading" aria-live="polite">
+  <div class="loading-card">
+    <div class="loading-emoji" aria-hidden="true">🎁</div>
+    <h1 class="loading-title">Boo's Game Box</h1>
+    <p id="loading-status" class="loading-status">Waking up the games…</p>
+    <div class="progress" role="progressbar" aria-labelledby="loading-status"
+         aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress">
+      <div class="progress-fill" id="progress-fill"></div>
+    </div>
+    <p id="loading-help" class="loading-help" hidden>
+      The first visit needs the internet. After that it works anywhere.
+    </p>
+    <button id="retry" class="btn btn-primary" type="button" hidden>Try again</button>
+  </div>
+</section>
+
+<!-- ─── the box ───────────────────────────────────────────────────── -->
+<main id="picker" class="screen picker" hidden>
+  <div class="box">
+    <div class="box-lid">
+      <h1 class="box-title">Boo's Game Box</h1>
+      <p class="box-subtitle">Pick a game.</p>
+    </div>
+    <ul id="tiles" class="tiles"></ul>
+  </div>
+
+  <p id="ios-hint" class="ios-hint" hidden>
+    <span>Tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>.</span>
+    <button id="ios-hint-dismiss" class="ios-hint-dismiss" type="button"
+            aria-label="Hide this tip">Got it</button>
+  </p>
+</main>
+
+<!-- ─── a game ────────────────────────────────────────────────────── -->
+<main id="game" class="screen game" hidden>
+  <header class="game-bar">
+    <button id="back" class="btn btn-quiet" type="button">← Back to the box</button>
+    <h1 id="game-title" class="game-title"></h1>
+    <div class="game-bar-right">
+      <span id="score" class="score" hidden></span>
+      <button id="sound-toggle" class="btn btn-icon" type="button"
+              aria-pressed="true" aria-label="Sound on">🔊</button>
+    </div>
+  </header>
+
+  <div id="transcript" class="transcript" tabindex="0" role="log"
+       aria-live="polite" aria-label="What has happened so far"></div>
+
+  <div id="prompt" class="prompt" role="group" tabindex="-1"
+       aria-label="Your turn"></div>
+</main>
+
+<script type="module" src="app.js"></script>
+
+<script>
+/* Offline + "add to home screen". Registered here rather than in app.js so
+ * it still happens if app.js ever fails to parse.
+ *
+ * Skipped on localhost, because a cache-first worker is exactly what stops
+ * "edit a .py file, refresh, see the change" from working. Add ?sw=1 to the
+ * URL when you want to test the real offline behaviour locally. */
+(function () {
+  if (!("serviceWorker" in navigator)) return;
+
+  var host = location.hostname;
+  var isLocal = host === "localhost" || host === "127.0.0.1" || host === "[::1]" || host === "";
+  var force = location.search.indexOf("sw=1") !== -1;
+
+  if (isLocal && !force) {
+    navigator.serviceWorker.getRegistrations().then(function (registrations) {
+      registrations.forEach(function (registration) { registration.unregister(); });
+    });
+    return;
+  }
+
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("sw.js").catch(function (error) {
+      console.warn("Service worker did not register:", error);
+    });
+  });
+}());
+</script>
+</body>
+</html>
