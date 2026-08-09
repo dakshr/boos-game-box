@@ -5,3 +5,7 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
+# Local editor state: launch.json points at whichever Python is on this
+# machine, and settings.local.json is per-user by name.
+.claude/
+
