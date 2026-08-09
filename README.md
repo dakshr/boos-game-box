@@ -187,23 +187,23 @@ in `public/py/games.json`, and a cache bump. Nothing in `app.js` or
 | Game | Original | Notes |
 |---|---|---|
 | Secret Number | `guessing_game.py` | Guess 1–20 with high/low hints. |
-| Silly Story | `mad_libs.py` | Six words in, one silly story out. |
+| Silly Story | `mad_libs.py` | Tap silly words, get one of eight stories. **Redesigned — see below.** |
 | Magic Zoo | `magic_zoo.py` | Pick an animal, collect stars, party every fifth. |
 | Math Garden | `garden.py` | Solve a sum, plant a 3×3 garden. |
 
-All four were verified line by line against the seeded originals. The
-handful of places where they could not be identical:
+### Three of them are faithful ports
+
+Secret Number, Magic Zoo and Math Garden were verified line by line against
+the seeded originals. The handful of places where they could not be identical:
 
 - **Bad input no longer crashes.** `guessing_game.py` did `int(input(...))`
   and raised a `ValueError` on `"abc"`. The contract forbids `send()` from
   raising, so it re-prompts instead.
-- **Empty answers re-prompt in Silly Story**, rather than putting a blank
-  hole in the middle of the story.
-- **"Want to make another story?" actually makes another one.** The
-  original could only tell you to re-run the script.
 - **ANSI colour and `time.sleep()` are gone from Magic Zoo.** The shell
   paints the screen now, and the bouncing animals still print — all at
   once instead of a fifth of a second apart.
+- **Magic Zoo's banner closes properly.** The original's middle line was one
+  column short of its own borders; the colour codes hid it.
 - **Magic Zoo's menu and Math Garden's plant/plot choices are buttons.**
   The values behind them (`"1"`…`"6"`, `"0"`, `"q"`) are exactly the
   strings the originals accepted, which is why they still work in a
@@ -211,9 +211,29 @@ handful of places where they could not be identical:
 - **The garden grid is drawn above its caption, not below.** A `View`
   carries one piece of art, and it renders after that turn's lines.
 
-Rules, wording, difficulty, and win conditions are unchanged. If something
-reads differently from the original, that's a bug — the originals in
-`terminal-games/` are the reference and are never modified.
+For those three, rules, wording, difficulty and win conditions are unchanged.
+If something reads differently from the original, that's a bug — the
+originals in `terminal-games/` are the reference and are never modified.
+
+### Silly Story is a deliberate redesign
+
+`mad_libs.py` asked six typed questions and told the same six sentences every
+time. Faithful, and stale after one go. It was rebuilt around two changes:
+
+- **Words are chosen from picture buttons**, five sampled fresh from a bank
+  each time, with `✏️ My own word` always available. A child who cannot type
+  can play the whole game; anyone can still type any word they like, which is
+  why it still works in a terminal.
+- **Eight stories instead of one**, each asking only the words it needs, and
+  a **"Same words, new story"** button that re-runs what the child already
+  picked through a different template. Words accumulate, so the second remix
+  usually asks for nothing at all.
+
+The original story is still in there as the first of the eight, word for word,
+and `terminal-games/mad_libs.py` is untouched. Adding a ninth story means
+appending one dict to `STORIES` in
+[`public/py/games/silly_story.py`](public/py/games/silly_story.py) — the
+state machine reads the slot list off whichever story it picked.
 
 ---
 

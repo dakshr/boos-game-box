@@ -10,7 +10,7 @@
  * │  most common way this app breaks.                                │
  * └──────────────────────────────────────────────────────────────────┘
  */
-const CACHE_VERSION = "v3";
+const CACHE_VERSION = "v4";
 
 /* Must match PYODIDE_VERSION in app.js. tools/check_games.py checks that
  * these two agree, so run it before you deploy. */
